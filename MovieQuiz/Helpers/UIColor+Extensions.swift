@@ -9,7 +9,4 @@ extension UIColor {
 //     static var ypWhite: UIColor { UIColor(named: "YP White") ?? UIColor.white}
 }
 
-extension UIFont {
-    static var ypRegular: UIFont { UIFont.systemFont(ofSize: 17, weight: .regular) }
-    static var ypMedium: UIFont { UIFont.systemFont(ofSize: 17, weight: .medium) }
-}
+
