@@ -1,7 +1,7 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    // MARK: - Lifecycle
+    // MARK: - Structures
     
     private struct QuizQuestion {
         let image: String
@@ -21,6 +21,8 @@ final class MovieQuizViewController: UIViewController {
         let buttonText: String
     }
     
+    // MARK: - Outlets
+    
     @IBOutlet weak private var noButton: UIButton!
     @IBOutlet weak private var yesButton: UIButton!
     @IBOutlet weak private var questionTitleLabel: UILabel!
@@ -28,13 +30,7 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet weak private var questionLabel: UILabel!
     @IBOutlet weak private var imageView: UIImageView!
     
-    @IBAction private func noButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
-    }
-    
-    @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
-    }
+    // MARK: - Properties
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
@@ -72,6 +68,18 @@ final class MovieQuizViewController: UIViewController {
                      correctAnswer: false),
     ]
     
+    // MARK: - Actions
+    
+    @IBAction private func noButtonClicked(_ sender: UIButton) {
+        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
+    }
+    
+    @IBAction private func yesButtonClicked(_ sender: UIButton) {
+        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
+    }
+    
+    // MARK: - Overrides
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -85,6 +93,8 @@ final class MovieQuizViewController: UIViewController {
         let viewModel = convert(model: firstQuestion)
         show(quiz: viewModel)
     }
+    
+    // MARK: - Private functions
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
@@ -150,7 +160,6 @@ final class MovieQuizViewController: UIViewController {
         
         self.present(alert, animated: true, completion: nil)
     }
-    
 }
 
 /*
