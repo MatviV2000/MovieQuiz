@@ -94,6 +94,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func show(quiz step: QuizStepViewModel) {
+        imageView.layer.borderWidth = 0
         imageView.image = step.image
         questionLabel.text = step.question
         indexLabel.text = step.questionNumber
@@ -126,7 +127,6 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.cornerRadius = 20
     
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.imageView.layer.masksToBounds = false // По идее тут должен выключать рамку
             self.showNextQuestionOrResults()
         }
     }
