@@ -17,11 +17,3 @@ extension UIFont {
         UIFont(name: "YSDisplay-Bold", size: size) ?? .boldSystemFont(ofSize: size)
     }
 }
-
-//
-//  UIFont+Extensions.swift
-//  MovieQuiz
-//
-//  Created by Василий Матвиенко on 13.05.2025.
-//
-

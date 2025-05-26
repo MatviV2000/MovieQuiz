@@ -68,15 +68,6 @@ final class MovieQuizViewController: UIViewController {
                      correctAnswer: false),
     ]
     
-    // MARK: - Actions
-    
-    @IBAction private func noButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
-    }
-    
-    @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
-    }
     
     // MARK: - Overrides
     
@@ -94,7 +85,7 @@ final class MovieQuizViewController: UIViewController {
         show(quiz: viewModel)
     }
     
-    // MARK: - Private functions
+    // MARK: - Private Methods
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
@@ -160,6 +151,17 @@ final class MovieQuizViewController: UIViewController {
         
         self.present(alert, animated: true, completion: nil)
     }
+    
+    // MARK: - Private Actions
+    
+    @IBAction private func noButtonClicked(_ sender: UIButton) {
+        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
+    }
+    
+    @IBAction private func yesButtonClicked(_ sender: UIButton) {
+        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
+    }
+    
 }
 
 /*
