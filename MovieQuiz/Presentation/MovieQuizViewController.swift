@@ -18,7 +18,7 @@ final class MovieQuizViewController: UIViewController {
     private var correctAnswers = 0
     
     private let questionsAmount: Int = 10
-    private let questionFactory: QuestionFactory = QuestionFactory()
+    private let questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private var currentQuestion: QuizQuestion?
     
     // MARK: - Overrides
@@ -125,7 +125,7 @@ final class MovieQuizViewController: UIViewController {
             return
         }
         
-        showAnswerResult(isCorrect: currentQuestion == false)
+        showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
         noButton.isEnabled = false
     }
     
@@ -134,7 +134,7 @@ final class MovieQuizViewController: UIViewController {
             return
         }
         
-        showAnswerResult(isCorrect: currentQuestion == true)
+        showAnswerResult(isCorrect: currentQuestion.correctAnswer)
         yesButton.isEnabled = false
     }
     
