@@ -13,9 +13,13 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet weak private var imageView: UIImageView!
     
     // MARK: - Properties
-    
+   
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    
+    private let questionsAmount: Int = 10
+    private let questionFactory: QuestionFactory = QuestionFactory()
+    private var currentQuestion: QuizQuestion?
     
     // MARK: - Overrides
     
@@ -28,9 +32,13 @@ final class MovieQuizViewController: UIViewController {
         indexLabel.font = .ysDisplayMedium
         questionLabel.font = .ysDisplayMedium(size: 23)
         
-        let firstQuestion = questions[currentQuestionIndex]
-        let viewModel = convert(model: firstQuestion)
-        show(quiz: viewModel)
+        if let firstQuestion = questionFactory.requestNextQuestion() {
+            currentQuestion = firstQuestion
+            let viewModel = convert(model: firstQuestion)
+            
+            show(quiz: viewModel)
+        }
+        
     }
     
     // MARK: - Private Methods
@@ -38,7 +46,7 @@ final class MovieQuizViewController: UIViewController {
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
                                               question: model.text,
-                                              questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
+                                              questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
     }
     
@@ -52,7 +60,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == questionsAmount - 1 {
             let viewModel = QuizResultsViewModel(title: "Этот раунд окончен!",
                                                  text: "Ваш результат \(correctAnswers)/10",
                                                  buttonText: "Сыграть еще раз")
@@ -60,10 +68,12 @@ final class MovieQuizViewController: UIViewController {
         } else {
             currentQuestionIndex += 1
             
-            let nextQuestion = questions[currentQuestionIndex]
-            let viewModel = convert(model: nextQuestion)
-            
-            show(quiz: viewModel)
+            if let nextQuestion = questionFactory.requestNextQuestion() {
+                currentQuestion = nextQuestion
+                let viewModel = convert(model: nextQuestion)
+                
+                show(quiz: viewModel)
+            }
         }
     }
     
@@ -95,9 +105,12 @@ final class MovieQuizViewController: UIViewController {
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
             
-            let firstQuestion = self.questions[self.currentQuestionIndex]
-            let viewModel = self.convert(model: firstQuestion)
-            self.show(quiz: viewModel)
+            if let firstQuestion = self.questionFactory.requestNextQuestion() {
+                self.currentQuestion = firstQuestion
+                let viewModel = self.convert(model: firstQuestion)
+                
+                self.show(quiz: viewModel)
+            }
         }
         
         alert.addAction(action)
@@ -108,12 +121,20 @@ final class MovieQuizViewController: UIViewController {
     // MARK: - Private Actions
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        showAnswerResult(isCorrect: currentQuestion == false)
         noButton.isEnabled = false
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        showAnswerResult(isCorrect: currentQuestion == true)
         yesButton.isEnabled = false
     }
     
