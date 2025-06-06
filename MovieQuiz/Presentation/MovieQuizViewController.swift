@@ -21,6 +21,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     
+    private var alertPresenter: AlertPresenter?
+    
+    
     // MARK: - Overrides
     
     override func viewDidLoad() {
@@ -31,6 +34,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         self.questionFactory = questionFactory
         
         questionFactory.requestNextQuestion()
+        
+        alertPresenter = AlertPresenter(viewController: self)
         
         noButton.titleLabel?.font = .ysDisplayMedium
         yesButton.titleLabel?.font = .ysDisplayMedium
@@ -45,7 +50,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         guard let question = question else {
             return
         }
-
+        
         currentQuestion = question
         let viewModel = convert(model: question)
         
@@ -102,23 +107,18 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) {[weak self] _ in
+        let alert = AlertModel(title: result.title,
+                               message: result.text,
+                               buttonText: result.buttonText,
+                               completion: { [weak self] in
             guard let self else { return }
-            
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
-            
             self.questionFactory?.requestNextQuestion()
         }
+        )
         
-        alert.addAction(action)
-        
-        self.present(alert, animated: true, completion: nil)
+        alertPresenter?.showAlert(model: alert)
     }
     
     // MARK: - Private Actions
