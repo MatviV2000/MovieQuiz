@@ -16,13 +16,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
-    
     private let questionsAmount: Int = 10
+    
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
-    
     private var alertPresenter: AlertPresenter?
-    
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Overrides
     
@@ -36,6 +35,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         questionFactory.requestNextQuestion()
         
         alertPresenter = AlertPresenter(viewController: self)
+        
+        statisticService = StatisticServiceImplementation()
         
         noButton.titleLabel?.font = .ysDisplayMedium
         yesButton.titleLabel?.font = .ysDisplayMedium
@@ -79,8 +80,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
+            statisticService?.store(correct: self.correctAnswers, total: self.questionsAmount)
+            
+            guard let bestGame = statisticService?.bestGame else {
+                return
+            }
+            
             let viewModel = QuizResultsViewModel(title: "Этот раунд окончен!",
-                                                 text: "Ваш результат \(correctAnswers)/10",
+                                                 text:
+ """
+ Ваш результат \(correctAnswers)/10 
+ Колличество сыгранных квизов \(statisticService?.gamesCount ?? 0)
+ Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))
+ Средняя точность \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
+ """,
                                                  buttonText: "Сыграть еще раз")
             show(quiz: viewModel)
         } else {
@@ -140,69 +153,4 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         showAnswerResult(isCorrect: currentQuestion.correctAnswer)
         yesButton.isEnabled = false
     }
-    
 }
-
-/*
- Mock-данные
- 
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- */
