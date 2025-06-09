@@ -1,25 +1,7 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Structures
-    
-    private struct QuizQuestion {
-        let image: String
-        let text: String
-        let correctAnswer: Bool
-    }
-    
-    private struct QuizStepViewModel {
-        let image: UIImage
-        let question: String
-        let questionNumber: String
-    }
-    
-    private struct QuizResultsViewModel {
-        let title: String
-        let text: String
-        let buttonText: String
-    }
     
     // MARK: - Outlets
     
@@ -34,55 +16,42 @@ final class MovieQuizViewController: UIViewController {
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    private let questionsAmount: Int = 10
     
-    private let questions: [QuizQuestion] = [
-        QuizQuestion(image: "The Godfather",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "The Dark Knight",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "Kill Bill",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "The Avengers",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "Deadpool",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "The Green Knight",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: true),
-        QuizQuestion(image: "Old",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: false),
-        QuizQuestion(image: "The Ice Age Adventures of Buck Wild",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: false),
-        QuizQuestion(image: "Tesla",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: false),
-        QuizQuestion(image: "Vivarium",
-                     text: "Рейтинг этого фильма больше чем 6?",
-                     correctAnswer: false),
-    ]
-    
+    private var questionFactory: QuestionFactoryProtocol?
+    private var currentQuestion: QuizQuestion?
+    private var alertPresenter: AlertPresenter?
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Overrides
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        noButton.titleLabel?.font = .ysDisplayMedium
-        yesButton.titleLabel?.font = .ysDisplayMedium
-        questionTitleLabel.font = .ysDisplayMedium
-        indexLabel.font = .ysDisplayMedium
-        questionLabel.font = .ysDisplayMedium(size: 23)
+        startUISetup()
         
-        let firstQuestion = questions[currentQuestionIndex]
-        let viewModel = convert(model: firstQuestion)
-        show(quiz: viewModel)
+        let questionFactory = QuestionFactory()
+        questionFactory.delegate = self
+        self.questionFactory = questionFactory
+        
+        questionFactory.requestNextQuestion()
+        
+        alertPresenter = AlertPresenter(viewController: self)
+        
+        statisticService = StatisticServiceImplementation()
+    }
+    
+    // MARK: - QuestionFactoryDelegate
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else { return }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
+        }
     }
     
     // MARK: - Private Methods
@@ -90,7 +59,7 @@ final class MovieQuizViewController: UIViewController {
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
                                               question: model.text,
-                                              questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
+                                              questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
     }
     
@@ -99,25 +68,35 @@ final class MovieQuizViewController: UIViewController {
         imageView.image = step.image
         questionLabel.text = step.question
         indexLabel.text = step.questionNumber
+        setAnswerButtonsState(isEnabled: true)
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == questionsAmount - 1 {
+            statisticService?.store(correct: self.correctAnswers, total: self.questionsAmount)
+            
+            guard let bestGame = statisticService?.bestGame else { return }
+            
             let viewModel = QuizResultsViewModel(title: "Этот раунд окончен!",
-                                                 text: "Ваш результат \(correctAnswers)/10",
+                                                 text:
+ """
+ Ваш результат \(correctAnswers)/10 
+ Колличество сыгранных квизов \(statisticService?.gamesCount ?? 0)
+ Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))
+ Средняя точность \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
+ """,
                                                  buttonText: "Сыграть еще раз")
             show(quiz: viewModel)
         } else {
             currentQuestionIndex += 1
             
-            let nextQuestion = questions[currentQuestionIndex]
-            let viewModel = convert(model: nextQuestion)
-            
-            show(quiz: viewModel)
+            questionFactory?.requestNextQuestion()
         }
     }
     
     private func showAnswerResult(isCorrect: Bool) {
+        setAnswerButtonsState(isEnabled: false)
+        
         if isCorrect {
             correctAnswers += 1
         }
@@ -127,103 +106,55 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         imageView.layer.cornerRadius = 20
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {[weak self] in
+            guard let self else { return }
             self.showNextQuestionOrResults()
         }
     }
     
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
+        let alert = AlertModel(title: result.title,
+                               message: result.text,
+                               buttonText: result.buttonText,
+                               completion: { [weak self] in
+            guard let self else { return }
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
-            
-            let firstQuestion = self.questions[self.currentQuestionIndex]
-            let viewModel = self.convert(model: firstQuestion)
-            self.show(quiz: viewModel)
+            self.questionFactory?.requestNextQuestion()
         }
+        )
         
-        alert.addAction(action)
-        
-        self.present(alert, animated: true, completion: nil)
+        alertPresenter?.showAlert(model: alert)
     }
+    
+    private func startUISetup() {
+        noButton.titleLabel?.font = .ysDisplayMedium
+        yesButton.titleLabel?.font = .ysDisplayMedium
+        questionTitleLabel.font = .ysDisplayMedium
+        indexLabel.font = .ysDisplayMedium
+        questionLabel.font = .ysDisplayMedium(size: 23)
+    }
+    
+    private func setAnswerButtonsState(isEnabled: Bool) {
+            yesButton.isEnabled = isEnabled
+            noButton.isEnabled = isEnabled
+        }
     
     // MARK: - Private Actions
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == false)
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        showAnswerResult(isCorrect: questions[currentQuestionIndex].correctAnswer == true)
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        showAnswerResult(isCorrect: currentQuestion.correctAnswer)
     }
-    
 }
-
-/*
- Mock-данные
- 
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- */
