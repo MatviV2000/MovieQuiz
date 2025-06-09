@@ -28,6 +28,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        startUISetup()
+        
         let questionFactory = QuestionFactory()
         questionFactory.delegate = self
         self.questionFactory = questionFactory
@@ -37,20 +39,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter = AlertPresenter(viewController: self)
         
         statisticService = StatisticServiceImplementation()
-        
-        noButton.titleLabel?.font = .ysDisplayMedium
-        yesButton.titleLabel?.font = .ysDisplayMedium
-        questionTitleLabel.font = .ysDisplayMedium
-        indexLabel.font = .ysDisplayMedium
-        questionLabel.font = .ysDisplayMedium(size: 23)
     }
     
     // MARK: - QuestionFactoryDelegate
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
+        guard let question = question else { return }
         
         currentQuestion = question
         let viewModel = convert(model: question)
@@ -74,17 +68,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         imageView.image = step.image
         questionLabel.text = step.question
         indexLabel.text = step.questionNumber
-        noButton.isEnabled = true
-        yesButton.isEnabled = true
+        setAnswerButtonsState(isEnabled: true)
     }
     
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
             statisticService?.store(correct: self.correctAnswers, total: self.questionsAmount)
             
-            guard let bestGame = statisticService?.bestGame else {
-                return
-            }
+            guard let bestGame = statisticService?.bestGame else { return }
             
             let viewModel = QuizResultsViewModel(title: "Этот раунд окончен!",
                                                  text:
@@ -104,6 +95,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func showAnswerResult(isCorrect: Bool) {
+        setAnswerButtonsState(isEnabled: false)
+        
         if isCorrect {
             correctAnswers += 1
         }
@@ -134,6 +127,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter?.showAlert(model: alert)
     }
     
+    private func startUISetup() {
+        noButton.titleLabel?.font = .ysDisplayMedium
+        yesButton.titleLabel?.font = .ysDisplayMedium
+        questionTitleLabel.font = .ysDisplayMedium
+        indexLabel.font = .ysDisplayMedium
+        questionLabel.font = .ysDisplayMedium(size: 23)
+    }
+    
+    private func setAnswerButtonsState(isEnabled: Bool) {
+            yesButton.isEnabled = isEnabled
+            noButton.isEnabled = isEnabled
+        }
+    
     // MARK: - Private Actions
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
@@ -142,7 +148,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         
         showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
-        noButton.isEnabled = false
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
@@ -151,6 +156,5 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         
         showAnswerResult(isCorrect: currentQuestion.correctAnswer)
-        yesButton.isEnabled = false
     }
 }
