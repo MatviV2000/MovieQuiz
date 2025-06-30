@@ -30,15 +30,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         startUISetup()
         
-        let questionFactory = QuestionFactory()
-        questionFactory.delegate = self
+        let questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         self.questionFactory = questionFactory
         
-        questionFactory.requestNextQuestion()
+        questionFactory.loadData()
         
         alertPresenter = AlertPresenter(viewController: self)
         
         statisticService = StatisticServiceImplementation()
+        
+        showLoadingIndicator()
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -57,10 +58,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Private Methods
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
-                                              question: model.text,
-                                              questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return questionStep
+        return QuizStepViewModel (
+            image: UIImage(data: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     private func show(quiz step: QuizStepViewModel) {
@@ -164,6 +165,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         })
             
         alertPresenter?.showAlert(model: alert)
+    }
+    
+    func didLoadDataFromServer() {
+        hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: any Error) {
+        showNetworkError(message: error.localizedDescription)
     }
     
     // MARK: - Private Actions
