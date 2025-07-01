@@ -137,9 +137,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func setAnswerButtonsState(isEnabled: Bool) {
-            yesButton.isEnabled = isEnabled
-            noButton.isEnabled = isEnabled
-        }
+        yesButton.isEnabled = isEnabled
+        noButton.isEnabled = isEnabled
+    }
     
     private func showLoadingIndicator() {
         activityIndicator.isHidden = false
@@ -163,7 +163,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self.correctAnswers = 0
             self.questionFactory?.requestNextQuestion()
         })
-            
+        
         alertPresenter?.showAlert(model: alert)
     }
     
