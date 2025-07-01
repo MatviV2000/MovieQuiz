@@ -11,7 +11,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet weak private var indexLabel: UILabel!
     @IBOutlet weak private var questionLabel: UILabel!
     @IBOutlet weak private var imageView: UIImageView!
-    
+    @IBOutlet weak private var activityIndicator: UIActivityIndicatorView!
     // MARK: - Properties
     
     private var currentQuestionIndex = 0
@@ -30,15 +30,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         startUISetup()
         
-        let questionFactory = QuestionFactory()
-        questionFactory.delegate = self
+        let questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         self.questionFactory = questionFactory
         
-        questionFactory.requestNextQuestion()
+        questionFactory.loadData()
         
         alertPresenter = AlertPresenter(viewController: self)
         
         statisticService = StatisticServiceImplementation()
+        
+        showLoadingIndicator()
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -57,10 +58,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Private Methods
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep = QuizStepViewModel( image: UIImage(named: model.image) ?? UIImage(),
-                                              question: model.text,
-                                              questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return questionStep
+        return QuizStepViewModel (
+            image: UIImage(data: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
     private func show(quiz step: QuizStepViewModel) {
@@ -136,9 +137,50 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func setAnswerButtonsState(isEnabled: Bool) {
-            yesButton.isEnabled = isEnabled
-            noButton.isEnabled = isEnabled
-        }
+        yesButton.isEnabled = isEnabled
+        noButton.isEnabled = isEnabled
+    }
+    
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    
+    private func hideLoadingIndicator() {
+        activityIndicator.isHidden = true
+        activityIndicator.stopAnimating()
+    }
+    
+    private func showNetworkError(message: String) {
+        showLoadingIndicator()
+        
+        let alert = AlertModel(title: "Ошибка",
+                               message: message,
+                               buttonText: "Попробовать ещё раз",
+                               completion: { [weak self] in
+            guard let self else { return }
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            let questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+            self.questionFactory = questionFactory
+            
+            questionFactory.loadData()
+            
+        })
+        
+        alertPresenter?.showAlert(model: alert)
+    }
+    
+    func didLoadDataFromServer() {
+        hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: any Error) {
+        hideLoadingIndicator()
+        showNetworkError(message: error.localizedDescription)
+    }
     
     // MARK: - Private Actions
     
