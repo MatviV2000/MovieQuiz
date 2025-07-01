@@ -161,7 +161,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             guard let self else { return }
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
-            self.questionFactory?.requestNextQuestion()
+            
+            let questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+            self.questionFactory = questionFactory
+            
+            questionFactory.loadData()
+            
         })
         
         alertPresenter?.showAlert(model: alert)
@@ -173,6 +178,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     func didFailToLoadData(with error: any Error) {
+        hideLoadingIndicator()
         showNetworkError(message: error.localizedDescription)
     }
     
