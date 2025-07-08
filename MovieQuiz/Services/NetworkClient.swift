@@ -11,7 +11,13 @@ struct NetworkClient: NetworkRouting {
     }
     
     func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
-        let request = URLRequest(url: url)
+        var request = URLRequest(url: url)
+        
+        #if targetEnvironment(simulator)
+
+            request.assumesHTTP3Capable = false
+
+        #endif
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {

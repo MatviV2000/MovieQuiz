@@ -22,13 +22,13 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testYesButton() throws {
-        sleep(5)
+        sleep(2)
         
         let firstPoster = app.images["Poster"]
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["Yes"].tap()
-        sleep(5)
+        sleep(2)
         
         let secondPoster = app.images["Poster"]
         let secondPosterData = secondPoster.screenshot().pngRepresentation
@@ -41,13 +41,13 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testNoButton() throws {
-        sleep(3)
+        sleep(2)
         
         let firstPoster = app.images["Poster"]
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["No"].tap()
-        sleep(3)
+        sleep(2)
         
         let secondPoster = app.images["Poster"]
         let secondPosterData = secondPoster.screenshot().pngRepresentation
@@ -59,34 +59,32 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testGameFinish() throws {
-        sleep(3)
+        sleep(2)
         
         for _ in 1...10 {
             app.buttons["Yes"].tap()
-            sleep(3)
+            sleep(2)
         }
         
-        let alert = app.alerts["MovieQuiz"]
-        let alertLabel = alert.label
-        let alertButtonLabel = alert.firstMatch.label
+        let alert = app.alerts["Этот раунд окончен!"]
         
         XCTAssertTrue(alert.exists)
-        XCTAssertEqual(alertLabel, "Этот раунд окончен!")
-        XCTAssertEqual(alertButtonLabel, "Сыграть еще раз")
+        XCTAssertEqual(alert.label, "Этот раунд окончен!")
+        XCTAssertEqual(alert.buttons.firstMatch.label, "Сыграть еще раз")
     }
     
     func testAlertDismiss() throws {
-        sleep(3)
+        sleep(2)
         
         for _ in 1...10 {
             app.buttons["Yes"].tap()
-            sleep(3)
+            sleep(2)
         }
         
-        let alert = app.alerts["MovieQuiz"]
+        let alert = app.alerts["Этот раунд окончен!"]
         alert.buttons.firstMatch.tap()
         
-        sleep(3)
+        sleep(2)
         
         let indexLabel = app.staticTexts["Index"]
         
