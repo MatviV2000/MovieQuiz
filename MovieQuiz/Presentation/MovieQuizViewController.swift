@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
 
     // MARK: - Outlets
     
@@ -86,7 +86,7 @@ final class MovieQuizViewController: UIViewController {
         setAnswerButtonsState(isEnabled: true)
     }
     
-    func highlightAnswerButton(isCorrectAnswer: Bool) {
+    func highlightImageBorder(isCorrectAnswer: Bool) {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.cornerRadius = 20
