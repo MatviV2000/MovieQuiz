@@ -8,7 +8,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private weak var viewController: MovieQuizViewControllerProtocol?
-
+    
     private let questionsAmount: Int = 10
     private var currentQuestionIndex: Int = 0
     private var correctAnswers = 0
@@ -118,23 +118,23 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         didAnswer(isCorrectAnswer: isCorrect)
         
         viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {[weak self] in
             guard let self else { return }
             
             self.proceedToNextQuestionOrResults()
         }
     }
-
+    
     //MARK: - Private Methods
     
     private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else {
             return
         }
-
+        
         let givenAnswer = isYes
-
+        
         proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
 }
